@@ -50,7 +50,6 @@ namespace MySQL
             if (conn.State != ConnectionState.Open)
                 conn.Open();
 
-
             MySqlCommand MyCommand = new MySqlCommand("INSERT INTO users VALUES (NULL, 'user111', 'user111', 'user111')", conn);
             MyCommand.ExecuteNonQuery();
             conn.Close();

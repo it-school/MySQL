@@ -17,8 +17,8 @@ namespace MySQL
             InitializeComponent();
 
             // строка подключения к БД
-            string connStr = "server=192.168.1.152;port=3309;user=itschool;database=itschool;";
-            //            string connStr = "server=127.0.0.1;port=3306;user=root;password=password;database=test;";
+            // string connStr = "server=192.168.1.152;port=3309;user=itschool;database=itschool;";
+            string connStr = "server=127.0.0.1;port=3306;user=root;password=password;database=test;";
             // создаём объект для подключения к БД
             conn = new MySqlConnection(connStr);
             RefreshAll();
@@ -26,11 +26,16 @@ namespace MySQL
 
         public void RefreshAll()
         {
+            if (conn.State != ConnectionState.Open)
+                conn.Open();
+
             gridView.ItemsSource = Select().DefaultView;
 
-            cmbUsers.ItemsSource = Select().DefaultView;
+            cmbUsers.ItemsSource = Select("SELECT id, login FROM users ORDER BY login").DefaultView;
             cmbUsers.DisplayMemberPath = "login";
             cmbUsers.SelectedValuePath = "id";
+
+            mainWindow.Title = Select("SELECT id, login FROM users ORDER BY login").Rows.Count.ToString();
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -67,7 +72,7 @@ namespace MySQL
             conn.Close();
         }
 
-        public DataTable Select(string query = "SELECT id, name, login, password, DATE_FORMAT(regdate, '%d.%m.%Y  %T') AS regdate FROM users")
+        public DataTable Select(string query = "SELECT id, name, login, password, DATE_FORMAT(regdate, '%d.%m.%Y') AS regdate FROM users")
         {
             // устанавливаем соединение с БД
             if (conn.State != ConnectionState.Open)
@@ -144,32 +149,79 @@ namespace MySQL
 
         private void GridView_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
         {
+            
             string query = "";
-            DataRowView dataRow = (DataRowView)gridView.SelectedItem;
-            MessageBox.Show(gridView.SelectedIndex.ToString());
-            if (gridView.SelectedIndex < gridView.Items.Count - 2)
+            string newValue = ((TextBox)e.EditingElement).Text;
+            query = $"SELECT id FROM cities WHERE city LIKE '{newValue}'";
+            //MessageBox.Show(query);
+            long id = 0;
+            MySqlCommand sqlCom = new MySqlCommand(query, conn);
+            MySqlDataReader MyDataReader = sqlCom.ExecuteReader();
+            if (MyDataReader.HasRows)
             {
-                //                int index = gridView.CurrentCell.Column.DisplayIndex;
-                string columnName = gridView.CurrentCell.Column.Header.ToString();
-                string newValue = ((TextBox)e.EditingElement).Text;
-                int id = (int)dataRow.Row.ItemArray[0];
+                MyDataReader.Read();
+                id = MyDataReader.GetInt64(0);
+                //MessageBox.Show(id.ToString());
 
-                query = "UPDATE users SET " + columnName + "=\"" + newValue + "\" WHERE id=" + id;
             }
             else
             {
-                /*
-                    for (int i = 1; i < dataRow.Row.Table.Columns.Count; i++)
-                        if (gridView.SelectedItems[i].ToString().Equals(""))
-                            return;
-
-
-                    query = $"INSERT INTO users VALUES (NULL, {dataRow.Row.ItemArray[1]}, {dataRow.Row.ItemArray[2]}, {dataRow.Row.ItemArray[3]}, NOW());";
-                    MessageBox.Show(query);
-                */
+                conn.Close();
+                conn.Open();
+                query = $"INSERT INTO cities VALUES (NULL, '{newValue}')";
+                sqlCom = new MySqlCommand(query, conn);
+                sqlCom.ExecuteNonQuery();
+                id = sqlCom.LastInsertedId;
             }
-            Update(query);
+            conn.Close();
+            // устанавливаем соединение с БД
+            if (conn.State != ConnectionState.Open)
+                conn.Open();
+
+            //            MessageBox.Show(query);
+            try
+            {
+                
+                DataRowView dataRow = (DataRowView)gridView.SelectedItem;
+                query = $"UPDATE users SET id_city = {id} WHERE id = {(int)dataRow.Row.ItemArray[0]}";
+                sqlCom = new MySqlCommand(query, conn);
+                sqlCom.ExecuteNonQuery();
+            }
+            catch (Exception exc)
+            {
+                MessageBox.Show(exc.Message);
+            }
+
+            Filter();
         }
+        /*
+        DataRowView dataRow = (DataRowView)gridView.SelectedItem;
+        //MessageBox.Show(gridView.SelectedIndex.ToString());
+        if (gridView.SelectedIndex < gridView.Items.Count - 2)
+        {
+            //                int index = gridView.CurrentCell.Column.DisplayIndex;
+            string columnName = gridView.CurrentCell.Column.Header.ToString();
+            string newValue = ((TextBox)e.EditingElement).Text;
+            int id = (int)dataRow.Row.ItemArray[0];
+
+            query = $"UPDATE users SET {columnName} =\"{newValue}\" WHERE id= {id}";
+           // MessageBox.Show(query);
+        }
+        else
+        {
+
+                for (int i = 1; i < dataRow.Row.Table.Columns.Count; i++)
+                    if (gridView.SelectedItems[i].ToString().Equals(""))
+                        return;
+
+
+                query = $"INSERT INTO users VALUES (NULL, {dataRow.Row.ItemArray[1]}, {dataRow.Row.ItemArray[2]}, {dataRow.Row.ItemArray[3]}, NOW());";
+                MessageBox.Show(query);
+
+        }
+        */
+        // Update(query);
+    
 
         private void GridView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
@@ -179,6 +231,19 @@ namespace MySQL
         private void CmbUsers_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             gridView.ItemsSource = Select("SELECT * FROM users WHERE id = " + ((ComboBox)sender).SelectedValue.ToString()).DefaultView;
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            Filter();
+        }
+
+        public void Filter()
+        {
+            conn.Close();
+
+            gridView.ItemsSource = Select("SELECT u.id, u.name, c.city FROM users AS u JOIN cities AS c ON c.id=u.id_city WHERE u.name LIKE '%" + filter.Text + "%';").DefaultView;
+
         }
     }
 }

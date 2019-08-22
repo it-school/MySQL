@@ -158,12 +158,15 @@ namespace MySQL
             }
             else
             {
-                for (int i = 1; i < dataRow.Row.Table.Columns.Count; i++)
-                    if (gridView.SelectedItems[i].ToString().Equals(""))
-                        return;
+                /*
+                    for (int i = 1; i < dataRow.Row.Table.Columns.Count; i++)
+                        if (gridView.SelectedItems[i].ToString().Equals(""))
+                            return;
 
-                query = $"INSERT INTO users VALUES (NULL, {dataRow.Row.ItemArray[1]}, {dataRow.Row.ItemArray[2]}, {dataRow.Row.ItemArray[3]}, NOW());";
-                MessageBox.Show(query);
+
+                    query = $"INSERT INTO users VALUES (NULL, {dataRow.Row.ItemArray[1]}, {dataRow.Row.ItemArray[2]}, {dataRow.Row.ItemArray[3]}, NOW());";
+                    MessageBox.Show(query);
+                */
             }
             Update(query);
         }

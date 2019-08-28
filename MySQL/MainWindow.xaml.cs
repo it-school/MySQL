@@ -49,7 +49,7 @@ namespace MySQL
             {
                 Random r = new Random();
                 int n = 10 + r.Next(100);
-                query = $"INSERT INTO users VALUES (NULL, 'user{n}', 'user{n}', 'user{n}', NOW())";
+                query = $"INSERT INTO users VALUES (NULL, 'user{n}', 'user_{n}', 'pass{n}', NOW(), " + (1 + r.Next(Select("SELECT id FROM cities").Rows.Count)) + ")";
             }
 
             // устанавливаем соединение с БД
@@ -62,9 +62,9 @@ namespace MySQL
             {
                 MyCommand.ExecuteNonQuery();
             }
-            catch (Exception e)
+            catch (Exception exc)
             {
-                MessageBox.Show(e.Message);
+                MessageBox.Show(exc.Message);
             }
 
             RefreshAll();
@@ -72,7 +72,7 @@ namespace MySQL
             conn.Close();
         }
 
-        public DataTable Select(string query = "SELECT id, name, login, password, DATE_FORMAT(regdate, '%d.%m.%Y') AS regdate FROM users")
+        public DataTable Select(string query = "SELECT id, name, login, password, DATE_FORMAT(regdate, '%d.%m.%Y') AS regdate, id_city FROM users")
         {
             // устанавливаем соединение с БД
             if (conn.State != ConnectionState.Open)
@@ -88,7 +88,7 @@ namespace MySQL
             // выполняем запрос и получаем ответ
             sqlCom.ExecuteNonQuery();
             MySqlDataAdapter dataAdapter = new MySqlDataAdapter(sqlCom);
-            DataTable dt = new DataTable();
+            DataTable dt = new DataTable();            
             dataAdapter.Fill(dt);
 
             return dt;
@@ -137,7 +137,7 @@ namespace MySQL
 
                     richTextBox1.Items.Add(id + "\t" + MyDataReader.GetString(1) + "\t" + MyDataReader.GetString(2));
                 }
-
+            MyDataReader.Close();
             // закрываем соединение с БД
             conn.Close();
         }
@@ -149,7 +149,6 @@ namespace MySQL
 
         private void GridView_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
         {
-            
             string query = "";
             string newValue = ((TextBox)e.EditingElement).Text;
             query = $"SELECT id FROM cities WHERE city LIKE '{newValue}'";
@@ -161,29 +160,22 @@ namespace MySQL
             {
                 MyDataReader.Read();
                 id = MyDataReader.GetInt64(0);
-                //MessageBox.Show(id.ToString());
-
+                MyDataReader.Close();
             }
             else
             {
-                conn.Close();
-                conn.Open();
+                MyDataReader.Close();
                 query = $"INSERT INTO cities VALUES (NULL, '{newValue}')";
                 sqlCom = new MySqlCommand(query, conn);
                 sqlCom.ExecuteNonQuery();
                 id = sqlCom.LastInsertedId;
             }
-            conn.Close();
-            // устанавливаем соединение с БД
-            if (conn.State != ConnectionState.Open)
-                conn.Open();
 
-            //            MessageBox.Show(query);
             try
             {
-                
                 DataRowView dataRow = (DataRowView)gridView.SelectedItem;
                 query = $"UPDATE users SET id_city = {id} WHERE id = {(int)dataRow.Row.ItemArray[0]}";
+                MessageBox.Show(query);
                 sqlCom = new MySqlCommand(query, conn);
                 sqlCom.ExecuteNonQuery();
             }
@@ -221,7 +213,7 @@ namespace MySQL
         }
         */
         // Update(query);
-    
+
 
         private void GridView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
@@ -240,7 +232,7 @@ namespace MySQL
 
         public void Filter()
         {
-            conn.Close();
+            //conn.Close();
 
             gridView.ItemsSource = Select("SELECT u.id, u.name, c.city FROM users AS u JOIN cities AS c ON c.id=u.id_city WHERE u.name LIKE '%" + filter.Text + "%';").DefaultView;
 

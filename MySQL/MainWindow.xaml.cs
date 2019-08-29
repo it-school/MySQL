@@ -1,6 +1,7 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
 using System.Data;
+using System.Data.SqlClient;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -17,8 +18,8 @@ namespace MySQL
             InitializeComponent();
 
             // строка подключения к БД
-            // string connStr = "server=192.168.1.152;port=3309;user=itschool;database=itschool;";
-            string connStr = "server=127.0.0.1;port=3306;user=root;password=password;database=test;";
+            string connStr = "server=192.168.1.152;port=3309;user=itschool;database=test;";
+            // string connStr = "server=127.0.0.1;port=3306;user=root;password=password;database=test;";
             // создаём объект для подключения к БД
             conn = new MySqlConnection(connStr);
             RefreshAll();
@@ -28,13 +29,16 @@ namespace MySQL
         {
             if (conn.State != ConnectionState.Open)
                 conn.Open();
-
+            gridView.ItemsSource = null;
             gridView.ItemsSource = Select().DefaultView;
-
+            gridView.Items.Refresh();
+            
+            cmbUsers.ItemsSource = null;
             cmbUsers.ItemsSource = Select("SELECT id, login FROM users ORDER BY login").DefaultView;
+            cmbUsers.Items.Refresh();
             cmbUsers.DisplayMemberPath = "login";
             cmbUsers.SelectedValuePath = "id";
-
+            
             mainWindow.Title = Select("SELECT id, login FROM users ORDER BY login").Rows.Count.ToString();
         }
 
@@ -67,8 +71,6 @@ namespace MySQL
                 MessageBox.Show(exc.Message);
             }
 
-            RefreshAll();
-
             conn.Close();
         }
 
@@ -77,7 +79,7 @@ namespace MySQL
             // устанавливаем соединение с БД
             if (conn.State != ConnectionState.Open)
                 conn.Open();
-
+            
             // объект для выполнения SQL-запроса
             MySqlCommand sqlCom = new MySqlCommand(query, conn);
 
@@ -86,7 +88,7 @@ namespace MySQL
             //            MessageBox.Show(name);
 
             // выполняем запрос и получаем ответ
-            sqlCom.ExecuteNonQuery();
+            sqlCom.ExecuteNonQueryAsync();
             MySqlDataAdapter dataAdapter = new MySqlDataAdapter(sqlCom);
             DataTable dt = new DataTable();            
             dataAdapter.Fill(dt);
@@ -145,75 +147,37 @@ namespace MySQL
         private void btnUpdateClick(object sender, RoutedEventArgs e)
         {
             Update();
+            RefreshAll();
         }
 
         private void GridView_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
         {
+            DataRowView dataRow = (DataRowView)gridView.SelectedItem;
             string query = "";
-            string newValue = ((TextBox)e.EditingElement).Text;
-            query = $"SELECT id FROM cities WHERE city LIKE '{newValue}'";
-            //MessageBox.Show(query);
-            long id = 0;
-            MySqlCommand sqlCom = new MySqlCommand(query, conn);
-            MySqlDataReader MyDataReader = sqlCom.ExecuteReader();
-            if (MyDataReader.HasRows)
+           // MessageBox.Show(gridView.SelectedIndex.ToString());
+            if (gridView.SelectedIndex < gridView.Items.Count - 2)
             {
-                MyDataReader.Read();
-                id = MyDataReader.GetInt64(0);
-                MyDataReader.Close();
+                //                int index = gridView.CurrentCell.Column.DisplayIndex;
+                string columnName = gridView.CurrentCell.Column.Header.ToString();
+                string newValue = ((TextBox)e.EditingElement).Text;
+                int id = (int)dataRow.Row.ItemArray[0];
+
+                query = $"UPDATE users SET {columnName} =\"{newValue}\" WHERE id= {id}";
+               // MessageBox.Show(query);
             }
             else
             {
-                MyDataReader.Close();
-                query = $"INSERT INTO cities VALUES (NULL, '{newValue}')";
-                sqlCom = new MySqlCommand(query, conn);
-                sqlCom.ExecuteNonQuery();
-                id = sqlCom.LastInsertedId;
-            }
+                    for (int i = 1; i < dataRow.Row.Table.Columns.Count; i++)
+                        if (gridView.SelectedItems[i].ToString().Equals(""))
+                            return;
 
-            try
-            {
-                DataRowView dataRow = (DataRowView)gridView.SelectedItem;
-                query = $"UPDATE users SET id_city = {id} WHERE id = {(int)dataRow.Row.ItemArray[0]}";
-                MessageBox.Show(query);
-                sqlCom = new MySqlCommand(query, conn);
-                sqlCom.ExecuteNonQuery();
+                    query = $"INSERT INTO users VALUES (NULL, {dataRow.Row.ItemArray[1]}, {dataRow.Row.ItemArray[2]}, {dataRow.Row.ItemArray[3]}, NOW());";
+                    // MessageBox.Show(query);
             }
-            catch (Exception exc)
-            {
-                MessageBox.Show(exc.Message);
-            }
-
+            
+            Update(query);
             Filter();
         }
-        /*
-        DataRowView dataRow = (DataRowView)gridView.SelectedItem;
-        //MessageBox.Show(gridView.SelectedIndex.ToString());
-        if (gridView.SelectedIndex < gridView.Items.Count - 2)
-        {
-            //                int index = gridView.CurrentCell.Column.DisplayIndex;
-            string columnName = gridView.CurrentCell.Column.Header.ToString();
-            string newValue = ((TextBox)e.EditingElement).Text;
-            int id = (int)dataRow.Row.ItemArray[0];
-
-            query = $"UPDATE users SET {columnName} =\"{newValue}\" WHERE id= {id}";
-           // MessageBox.Show(query);
-        }
-        else
-        {
-
-                for (int i = 1; i < dataRow.Row.Table.Columns.Count; i++)
-                    if (gridView.SelectedItems[i].ToString().Equals(""))
-                        return;
-
-
-                query = $"INSERT INTO users VALUES (NULL, {dataRow.Row.ItemArray[1]}, {dataRow.Row.ItemArray[2]}, {dataRow.Row.ItemArray[3]}, NOW());";
-                MessageBox.Show(query);
-
-        }
-        */
-        // Update(query);
-
 
         private void GridView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
@@ -222,20 +186,96 @@ namespace MySQL
 
         private void CmbUsers_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            gridView.ItemsSource = Select("SELECT * FROM users WHERE id = " + ((ComboBox)sender).SelectedValue.ToString()).DefaultView;
+            if (cmbUsers.SelectedValue != null)
+            {
+                int index = (int)(((ComboBox)sender).SelectedValue);
+                gridView.ItemsSource = null;
+                gridView.ItemsSource = Select("SELECT * FROM users WHERE id = " + index).DefaultView;
+                gridView.Items.Refresh();
+            }
         }
 
-        private void Button_Click_1(object sender, RoutedEventArgs e)
+        private void Button_Filter_Click(object sender, RoutedEventArgs e)
         {
             Filter();
         }
 
         public void Filter()
         {
-            //conn.Close();
+            try
+            {
+                gridViewFilter.ItemsSource = null;
+                gridViewFilter.ItemsSource = Select("SELECT u.id, u.name, c.city FROM users AS u JOIN cities AS c ON c.id=u.id_city WHERE u.name LIKE '%" + filter.Text + "%';").DefaultView;
+                gridViewFilter.Items.Refresh();
+            }
+            catch (Exception exc)
+            {
+                mb(exc.Message);
+            }            
+        }
 
-            gridView.ItemsSource = Select("SELECT u.id, u.name, c.city FROM users AS u JOIN cities AS c ON c.id=u.id_city WHERE u.name LIKE '%" + filter.Text + "%';").DefaultView;
+        public static void mb(object text)
+        {
+            MessageBox.Show(text.ToString());
+        }
 
+        private void GridViewFilter_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+        {
+                string query = "";
+                string newValue = ((TextBox)e.EditingElement).Text;
+                query = $"SELECT id FROM cities WHERE city LIKE '{newValue}'";
+                //MessageBox.Show(query);
+                long id = 0;
+                MySqlCommand sqlCom = new MySqlCommand(query, conn);
+                MySqlDataReader MyDataReader = sqlCom.ExecuteReader();
+                if (MyDataReader.HasRows)
+                {
+                    MyDataReader.Read();
+                    id = MyDataReader.GetInt64(0);
+                    MyDataReader.Close();
+                }
+                else
+                {
+                    MyDataReader.Close();
+                    query = $"INSERT INTO cities VALUES (NULL, '{newValue}')";
+                    sqlCom = new MySqlCommand(query, conn);
+                    sqlCom.ExecuteNonQuery();
+                    id = sqlCom.LastInsertedId;
+                }
+
+                try
+                {
+                    DataRowView dataRow = (DataRowView)gridViewFilter.SelectedItem;
+                    query = $"UPDATE users SET id_city = {id} WHERE id = {(int)dataRow.Row.ItemArray[0]}";
+                    // MessageBox.Show(query);
+                    sqlCom = new MySqlCommand(query, conn);
+                    sqlCom.ExecuteNonQuery();
+                }
+                catch (Exception exc)
+                {
+                    MessageBox.Show(exc.Message);
+                }
+
+            RefreshAll();
+                // Filter();
+        }
+
+        private void btnClearDB(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                MySqlCommand cmd = new MySqlCommand("DELETE FROM users ORDER BY id DESC LIMIT @val1;", conn);
+                MySqlParameter recNum = new MySqlParameter("@val1", MySqlDbType.Int32);
+                recNum.Value = Convert.ToInt32(recordsToDelete.Text);
+                cmd.Parameters.Add(recNum);
+                cmd.Prepare();
+                mainWindow.Title = cmd.ExecuteNonQuery().ToString();
+                RefreshAll();
+            }
+            catch (Exception exc)
+            {
+                mb(exc.Message);
+            }
         }
     }
 }

@@ -5,23 +5,26 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MySQL"
         mc:Ignorable="d"
-        Title="MainWindow" Height="466.73" Width="802.574"
+        Title="MainWindow" Height="468.678" Width="802.574"
         xmlns:res="clr-namespace:MySQL.Properties"
         x:Name="mainWindow"
         >
-    <Grid x:Name="dataGrid" Margin="0,0,0,-7">
-        <Button Content="{x:Static res:Resources.Select}" HorizontalAlignment="Left" Margin="52,397,0,0" VerticalAlignment="Top" Width="79" Click="Button_Click" RenderTransformOrigin="1.305,0.433" Height="25"/>
-        <ListView x:Name="richTextBox1" HorizontalAlignment="Left" Height="376" Margin="10,10,0,0" VerticalAlignment="Top" Width="222">
+    <Grid x:Name="dataGrid" Margin="0,0,0,42">
+        <Button Content="{x:Static res:Resources.Select}" HorizontalAlignment="Left" Margin="72,364,0,0" VerticalAlignment="Top" Width="79" Click="Button_Click" RenderTransformOrigin="1.305,0.433" Height="25"/>
+        <ListView x:Name="richTextBox1" HorizontalAlignment="Left" Height="349" Margin="10,10,0,0" VerticalAlignment="Top" Width="222">
             <ListView.View>
                 <GridView>
                     <GridViewColumn/>
                 </GridView>
             </ListView.View>
         </ListView>
-        <Button Content="Add data" HorizontalAlignment="Left" Margin="482,364,0,0" VerticalAlignment="Top" Width="79" Click="btnUpdateClick" Height="25"/>
-        <DataGrid x:Name="gridView" HorizontalAlignment="Left" Height="348" Margin="237,11,0,0" VerticalAlignment="Top" Width="545" CellEditEnding="GridView_CellEditEnding" ContextMenuOpening="GridView_ContextMenuOpening"/>
+        <Button Content="Add data" HorizontalAlignment="Left" Margin="441,364,0,0" VerticalAlignment="Top" Width="79" Click="btnUpdateClick" Height="25"/>
+        <DataGrid x:Name="gridView" HorizontalAlignment="Left" Height="348" Margin="237,11,0,0" VerticalAlignment="Top" Width="299" CellEditEnding="GridView_CellEditEnding" ContextMenuOpening="GridView_ContextMenuOpening"/>
         <ComboBox x:Name="cmbUsers" HorizontalAlignment="Left" Margin="237,364,0,0" VerticalAlignment="Top" Width="173" SelectionChanged="CmbUsers_SelectionChanged"/>
-        <TextBox x:Name="filter" Height="23" Margin="639,364,0,0" TextWrapping="Wrap" Text="user" VerticalAlignment="Top" Width="120"/>
-        <Button Content="Show subquery" HorizontalAlignment="Left" Margin="651,397,0,0" VerticalAlignment="Top" Width="109" Click="Button_Click_1" Height="25"/>
+        <TextBox x:Name="filter" Height="23" Margin="541,364,134,0" TextWrapping="Wrap" Text="user" VerticalAlignment="Top" Width="120"/>
+        <Button Content="Show subquery" HorizontalAlignment="Left" Margin="676,364,0,0" VerticalAlignment="Top" Width="109" Click="Button_Filter_Click" Height="25"/>
+        <DataGrid x:Name="gridViewFilter" HorizontalAlignment="Left" Height="348" Margin="541,11,0,0" VerticalAlignment="Top" Width="244" CellEditEnding="GridViewFilter_CellEditEnding" ContextMenuOpening="GridView_ContextMenuOpening"/>
+        <Button Content="Clear last records" HorizontalAlignment="Left" Height="24" Margin="27,405,0,-33" VerticalAlignment="Top" Width="124" Click="btnClearDB" RenderTransformOrigin="0.819,0.548"/>
+        <TextBox x:Name="recordsToDelete" HorizontalAlignment="Left" Height="23" Margin="174,406,0,-33" TextWrapping="Wrap" Text="3" VerticalAlignment="Top" Width="35"/>
     </Grid>
 </Window>

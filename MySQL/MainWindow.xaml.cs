@@ -4,7 +4,6 @@
 using MySql.Data.MySqlClient;
 using System;
 using System.Data;
-using System.Data.SqlClient;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -21,8 +20,8 @@ namespace MySQL
             InitializeComponent();
 
             // строка подключения к БД
-            string connStr = "server=192.168.1.152;port=3309;user=itschool;database=test;";
-            // string connStr = "server=127.0.0.1;port=3306;user=root;password=password;database=test;";
+            //string connStr = "server=192.168.1.152;port=3309;user=itschool;database=test;";
+             string connStr = "server=127.0.0.1;port=3306;user=root;password=password;database=test;";
             // создаём объект для подключения к БД
             conn = new MySqlConnection(connStr);
             RefreshAll();

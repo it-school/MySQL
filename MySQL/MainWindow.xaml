@@ -3,12 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:MySQL"
         mc:Ignorable="d"
-        Title="MainWindow" Height="468.678" Width="802.574"
+        Title="MainWindow" Height="480" Width="800"
         xmlns:res="clr-namespace:MySQL.Properties"
-        x:Name="mainWindow"
-        >
+        x:Name="mainWindow">
     <Grid x:Name="dataGrid" Margin="0,0,0,42">
         <Button Content="{x:Static res:Resources.Select}" HorizontalAlignment="Left" Margin="72,364,0,0" VerticalAlignment="Top" Width="79" Click="Button_Click" RenderTransformOrigin="1.305,0.433" Height="25"/>
         <ListView x:Name="richTextBox1" HorizontalAlignment="Left" Height="349" Margin="10,10,0,0" VerticalAlignment="Top" Width="222">

@@ -1,4 +1,7 @@
-﻿using MySql.Data.MySqlClient;
+﻿// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
+
+using MySql.Data.MySqlClient;
 using System;
 using System.Data;
 using System.Data.SqlClient;
@@ -132,6 +135,7 @@ namespace MySQL
             }
 
             if (MyDataReader != null && MyDataReader.HasRows)
+            { 
                 while (MyDataReader.Read())
                 {
                     int id = MyDataReader.GetInt32(0); //Получаем целое число
@@ -139,7 +143,8 @@ namespace MySQL
 
                     richTextBox1.Items.Add(id + "\t" + MyDataReader.GetString(1) + "\t" + MyDataReader.GetString(2));
                 }
-            MyDataReader.Close();
+                MyDataReader.Close();
+            }
             // закрываем соединение с БД
             conn.Close();
         }
